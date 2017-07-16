@@ -59,11 +59,11 @@ echo "\n">> $DIR/$LOG
 echo "Creating database directory ..." >> $DIR/$LOG
 mkdir -p $DIR/$DATE/$HOURS
 
-#for db in $($MYSQL --user=$USER --password=$PASS -e 'show databases' | egrep -ve 'Database|schema|test|phpmyadmin')
-#do
-#    echo "Backup database $db" >> $DIR/$LOG
-#    $MYSQLDUMP  --user=$USER --password=$PASS --host=$HOST $db | gzip > $DIR/$DATE/$HOURS/$db.sql.gz
-#    sleep 1
+for db in $($MYSQL --user=$USER --password=$PASS -e 'show databases' | egrep -ve 'Database|schema|test|phpmyadmin')
+do
+    echo "Backup database $db" >> $DIR/$LOG
+    $MYSQLDUMP  --user=$USER --password=$PASS --host=$HOST $db | gzip > $DIR/$DATE/$HOURS/$db.sql.gz
+    sleep 1
 #done
 
 echo "Creating Backup MySQL Done ..." >> $DIR/$LOG
