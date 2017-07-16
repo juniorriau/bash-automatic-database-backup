@@ -4,19 +4,19 @@
 ###############       juniorriau18@gmail.com       ################
 ###################################################################
 
-# MySQL User
-USER="root"
+# MySQL User. For backing up all databases, use root
+USER="your mysql user"
 # MySQL Password
-PASS="hafizh"
-# MySQL Host
+PASS="your mysql pass"
+# MySQL Host. Default is localhost
 HOST="localhost"
 # Backup Directory
-DIR="/home/hafizh/mysqlbackup"
+DIR="/path/to/directory"
 # Backup Date
 DATE=$(date +"%d-%b-%Y")
 # Baackup Hour
 HOURS=$(date +"%H-00")
-# Backup Retain
+# Backup Retain. Number of backup wil not remove 
 RETAIN=2
 # Backup Expire Day / Hour
 EXP=2
@@ -64,16 +64,16 @@ do
     echo "Backup database $db" >> $DIR/$LOG
     $MYSQLDUMP  --user=$USER --password=$PASS --host=$HOST $db | gzip > $DIR/$DATE/$HOURS/$db.sql.gz
     sleep 1
-#done
+done
 
 echo "Creating Backup MySQL Done ..." >> $DIR/$LOG
 echo "Checking expire backup ..." >> $DIR/$LOG
 # Checking expire backup
 if [ $DAY != 0 ]; then
     echo "Expire by Day. Searching expire files " >> $DIR/$LOG
-    for file in $(cd $DIR; find ./ -mindepth 2 -type d -mtime +$[$RETAIN*$DAY])
+    for file in $(cd $DIR; find ./ -mindepth 2 -type d -mtime +$[$EXP])
     do
-        if [ $file === "" ]; then
+        if [ -z $file ]; then
             break;
         else
             echo "Removing $file" >> $DIR/$LOG
@@ -82,9 +82,10 @@ if [ $DAY != 0 ]; then
     done;
 else
     echo "Expire by Hours. Searching expire files" >> $DIR/$LOG
-    for file in $(find $DIR/ -mindepth 2 -type d -mmin +$[$HOUR*10])
+    for file in $(find $DIR/ -mindepth 2 -type d -mmin +$[$EXP*60])
     do
-        if [ $file === "" ]; then
+        if [[ -z "$file" ]]; then
+            echo "No file expired"
             break;
         else
             echo "Removing $file" >> $DIR/$LOG
