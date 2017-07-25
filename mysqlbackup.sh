@@ -4,19 +4,19 @@
 ###############       juniorriau18@gmail.com       ################
 ###################################################################
 
-# MySQL User. For backing up all databases, use root
-USER="your mysql user"
+# MySQL User
+USER="root"
 # MySQL Password
-PASS="your mysql pass"
-# MySQL Host. Default is localhost
+PASS="hafizh"
+# MySQL Host
 HOST="localhost"
 # Backup Directory
-DIR="/path/to/directory"
+DIR="/home/hafizh/mysqlbackup"
 # Backup Date
 DATE=$(date +"%d-%b-%Y")
 # Baackup Hour
 HOURS=$(date +"%H-00")
-# Backup Retain. Number of backup wil not remove 
+# Backup Retain
 RETAIN=2
 # Backup Expire Day / Hour
 EXP=2
@@ -56,18 +56,8 @@ fi
 
 # Backup Databases
 echo "\n">> $DIR/$LOG
-echo "Creating database directory ..." >> $DIR/$LOG
-mkdir -p $DIR/$DATE/$HOURS
 
-for db in $($MYSQL --user=$USER --password=$PASS -e 'show databases' | egrep -ve 'Database|schema|test|phpmyadmin')
-do
-    echo "Backup database $db" >> $DIR/$LOG
-    $MYSQLDUMP  --user=$USER --password=$PASS --host=$HOST $db | gzip > $DIR/$DATE/$HOURS/$db.sql.gz
-    sleep 1
-done
-
-echo "Creating Backup MySQL Done ..." >> $DIR/$LOG
-echo "Checking expire backup ..." >> $DIR/$LOG
+echo "Checking expire backup to free space ..." >> $DIR/$LOG
 # Checking expire backup
 if [ $DAY != 0 ]; then
     echo "Expire by Day. Searching expire files " >> $DIR/$LOG
@@ -80,10 +70,13 @@ if [ $DAY != 0 ]; then
             rm -rf $file
         fi
     done;
+    echo "Removing old Directory" >> $DIR/$LOG
+    find $DIR/ -type d -mtime +$[$EXP] -print0 | xargs -0 rm
 else
     echo "Expire by Hours. Searching expire files" >> $DIR/$LOG
     for file in $(find $DIR/ -mindepth 2 -type d -mmin +$[$EXP*60])
     do
+        echo $file
         if [[ -z "$file" ]]; then
             echo "No file expired"
             break;
@@ -92,6 +85,20 @@ else
             rm -rf $file
         fi
     done;
+    echo "Removing old Directory" >> $DIR/$LOG
+    find $DIR/ -type d -mmin $[$EXP*60] -print0 | xargs -0 rm
 fi
+
+echo "Creating database directory ..." >> $DIR/$LOG
+mkdir -p $DIR/$DATE/$HOURS
+
+for db in $($MYSQL --user=$USER --password=$PASS -e 'show databases' | egrep -ve 'Database|schema|test|phpmyadmin')
+do
+    echo "Backup database $db" >> $DIR/$LOG
+    $MYSQLDUMP  --user=$USER --password=$PASS --host=$HOST $db | gzip > $DIR/$DATE/$HOURS/$db.sql.gz
+    sleep 1
+done
+echo "Creating Backup MySQL Done ..." >> $DIR/$LOG
+
 echo "Backup done. Exiting ..."
-exit 1
+exit 0
